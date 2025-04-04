@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY ["QuanLyThucTap.csproj", "./"]
+COPY ["ABC.csproj", "./"]
 RUN dotnet restore "ABC.csproj"
 COPY . .
 RUN dotnet build "ABC.csproj" -c Release -o /app/build
