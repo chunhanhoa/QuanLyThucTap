@@ -2,26 +2,28 @@ using ABC.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Thay đổi cấu hình dịch vụ DbContext - Sửa phần này
+// Thay đổi cấu hình dịch vụ DbContext - Sửa cách đăng ký để không xung đột với OnConfiguring
 if (builder.Environment.IsProduction())
 {
-    // Chỉ sử dụng PostgreSQL cho môi trường production (Render)
+    // Cách đơn giản hơn để tránh xung đột provider
     builder.Services.AddDbContext<QlpcthucTapContext>(options =>
-        options.UseNpgsql(
-            builder.Configuration.GetConnectionString("DefaultConnection")));
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    });
 }
 else
 {
-    // Chỉ sử dụng SQL Server cho môi trường development
-    builder.Services.AddDbContext<QlpcthucTapContext>(options =>
-        options.UseSqlServer(
-            builder.Configuration.GetConnectionString("DefaultConnection")));
+    // Trong môi trường development, để OnConfiguring xử lý
+    // nên không đăng ký thêm ở đây để tránh xung đột
 }
 
 // Thêm Authentication với Cookie
