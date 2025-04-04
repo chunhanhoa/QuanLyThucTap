@@ -1,0 +1,337 @@
+@model IEnumerable<ABC.Models.Nguoiphutrach>
+@{
+    ViewData["Title"] = "Người Phụ Trách";
+}
+
+<div class="app-container">
+    <div class="content-wrapper">
+        <div class="row p-4">
+            <div class="col-md-12" id="listSection">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Danh sách người phụ trách</h5>
+                        <button class="btn btn-primary hover-scale" onclick="toggleForm()">
+                            <i class='bx bx-plus'></i> Thêm người phụ trách
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class='bx bx-search'></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="searchInput"
+                                        placeholder="Tìm kiếm người phụ trách...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="responsibleTable">
+                                <thead>
+                                    <tr>
+                                        <th>Mã NPT</th>
+                                        <th>Tên người phụ trách</th>
+                                        <th>Chức vụ</th>
+                                        <th>SĐT</th>
+                                        <th>Email</th>
+                                        <th>Tên doanh nghiệp</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var person in Model)
+                                    {
+                                        <tr>
+                                            <td>@person.MaNpt</td>
+                                            <td>@person.TenNpt</td>
+                                            <td>@(person.ChucVu ?? "N/A")</td>
+                                            <td>@(person.Sdt ?? "N/A")</td>
+                                            <td>@(person.Email ?? "N/A")</td>
+                                            <td>@(person.MaDnNavigation?.TenDn ?? "N/A")</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning hover-scale" title="Chỉnh sửa"
+                                                    onclick="editManager(@person.MaNpt)">
+                                                    <i class='bx bx-edit'></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger hover-scale" title="Xóa"
+                                                    onclick="confirmDelete(@person.MaNpt)">
+                                                    <i class='bx bx-trash'></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-end">
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                                        <i class='bx bx-chevron-left'></i>
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                                        <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="formSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-user-plus me-2'></i>Thêm người phụ trách
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="ResponsiblePerson" asp-action="Create" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="maNpt" name="MaNpt" required>
+                                        <label for="maNpt">Mã NPT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="tenNpt" name="TenNpt" required>
+                                        <label for="tenNpt">Tên Người Phụ Trách</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="chucVu" name="ChucVu">
+                                        <label for="chucVu">Chức Vụ</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="tel" class="form-control" id="sdt" name="Sdt">
+                                        <label for="sdt">SĐT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="email" name="Email">
+                                        <label for="email">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="maDn" name="MaDn">
+                                            <option value="">-- Chọn doanh nghiệp --</option>
+                                            @foreach (var company in ViewBag.Companies)
+                                            {
+                                                <option value="@company.MaDn">@company.TenDn</option>
+                                            }
+                                        </select>
+                                        <label for="maDn">Tên Doanh Nghiệp</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="editFormSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-edit-alt me-2'></i>Thông tin người phụ trách
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleEditForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="ResponsiblePerson" asp-action="Edit" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="editMaNpt" name="MaNpt" readonly>
+                                        <label for="editMaNpt">Mã NPT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editTenNpt" name="TenNpt" required>
+                                        <label for="editTenNpt">Tên Người Phụ Trách</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editChucVu" name="ChucVu">
+                                        <label for="editChucVu">Chức Vụ</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="tel" class="form-control" id="editSdt" name="Sdt">
+                                        <label for="editSdt">SĐT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="editEmail" name="Email">
+                                        <label for="editEmail">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editMaDn" name="MaDn">
+                                            <option value="">-- Chọn doanh nghiệp --</option>
+                                            @foreach (var company in ViewBag.Companies)
+                                            {
+                                                <option value="@company.MaDn">@company.TenDn</option>
+                                            }
+                                        </select>
+                                        <label for="editMaDn">Tên Doanh Nghiệp</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleEditForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleForm() {
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+            const editFormSection = document.getElementById('editFormSection');
+
+            if (formSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                formSection.style.display = 'block';
+                editFormSection.style.display = 'none'; // Ẩn form chỉnh sửa nếu đang mở
+            } else {
+                listSection.className = 'col-md-12';
+                formSection.style.display = 'none';
+            }
+        }
+
+        function toggleEditForm() {
+            const editFormSection = document.getElementById('editFormSection');
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+
+            if (editFormSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                editFormSection.style.display = 'block';
+                formSection.style.display = 'none'; // Ẩn form thêm nếu đang mở
+            } else {
+                listSection.className = 'col-md-12';
+                editFormSection.style.display = 'none';
+            }
+        }
+
+        function editManager(maNpt) {
+            fetch(`/ResponsiblePerson/Edit/${maNpt}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Không tìm thấy người phụ trách');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('editMaNpt').value = data.maNpt || '';
+                document.getElementById('editTenNpt').value = data.tenNpt || '';
+                document.getElementById('editChucVu').value = data.chucVu || '';
+                document.getElementById('editSdt').value = data.sdt || '';
+                document.getElementById('editEmail').value = data.email || '';
+                document.getElementById('editMaDn').value = data.maDn || '';
+                toggleEditForm(); // Hiển thị form chỉnh sửa
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi khi tải thông tin người phụ trách: ' + error.message);
+            });
+        }
+
+        function confirmDelete(maNpt) {
+            if (confirm('Bạn có chắc muốn xóa người phụ trách này không?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/ResponsiblePerson/Delete';
+
+                const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiForgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiForgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = maNpt;
+                form.appendChild(idInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const input = this.value.toLowerCase();
+            const table = document.getElementById('responsibleTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+
+                for (let j = 0; j < cells.length - 1; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.includes(input)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                row.style.display = found ? '' : 'none';
+            }
+        });
+    </script>
+}

@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Từ chối truy cập";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-header bg-danger text-white">
+                    <h4><i class="fas fa-exclamation-triangle me-2"></i>Từ chối truy cập</h4>
+                </div>
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-lock text-danger" style="font-size: 5rem;"></i>
+                    </div>
+                    <h5 class="card-title mb-4">Bạn không có quyền truy cập vào trang này</h5>
+                    <p class="card-text text-muted mb-4">
+                        Để truy cập trang này, bạn cần có quyền phù hợp. 
+                        Vui lòng liên hệ với quản trị viên để được cấp quyền.
+                    </p>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Quay về trang chủ
+                    </a>
+                </div>
+                <div class="card-footer text-muted">
+                    Mã lỗi: 403 Forbidden
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,23 @@
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    <div class="d-flex align-items-center">
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <span>@(Context.Session.GetString("Username") ?? User.Identity.Name)</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li>
+                    <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="dropdown-item"><i class='bx bx-log-out me-2'></i>Đăng xuất</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex align-items-center">
+        <a href="@Url.Action("Login", "Account")" class="btn btn-outline-primary me-2">Đăng nhập</a>
+    </div>
+}

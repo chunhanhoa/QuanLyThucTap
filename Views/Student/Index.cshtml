@@ -1,0 +1,461 @@
+@model IEnumerable<ABC.Models.Sinhvien>
+@{
+    ViewData["Title"] = "Sinh Viên";
+}
+
+<div class="app-container">
+    <div class="content-wrapper">
+        <div class="row p-4">
+            <div class="@(ViewBag.ShowForm == true ? "col-md-8" : "col-md-12")" id="listSection">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Danh sách sinh viên thực tập</h5>
+                        <button class="btn btn-primary hover-scale" onclick="toggleForm()">
+                            <i class='bx bx-plus'></i> Thêm sinh viên
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class='bx bx-search'></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="searchInput"
+                                        placeholder="Tìm kiếm sinh viên...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="studentTable">
+                                <thead>
+                                    <tr>
+                                        <th>Mã SV</th>
+                                        <th>Họ tên</th>
+                                        <th>Lớp</th>
+                                        <th>Khoa</th>
+                                        <th>GVHD</th>
+                                        <th>Người phụ trách</th>
+                                        <th>Đề tài</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var student in Model)
+                                    {
+                                        <tr>
+                                            <td>@student.MaSv</td>
+                                            <td>@student.TenSv</td>
+                                            <td>@student.Lop</td>
+                                            <td>@(student.MaKhoaNavigation?.TenKhoa ?? "N/A")</td>
+                                            <td>@(student.MaGvNavigation?.TenGv ?? "N/A")</td>
+                                            <td>@(student.MaNptNavigation?.TenNpt ?? "N/A")</td>
+                                            <td>@(student.MaDtNavigation?.TenDt ?? "N/A")</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning hover-scale" title="Chỉnh sửa"
+                                                    onclick="editStudent('@student.MaSv')">
+                                                    <i class='bx bx-edit'></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger hover-scale" title="Xóa"
+                                                    onclick="confirmDelete('@student.MaSv')">
+                                                    <i class='bx bx-trash'></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-end">
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                                        <i class='bx bx-chevron-left'></i>
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                                        <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="formSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-user-plus me-2'></i>Thêm sinh viên
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Student" asp-action="Create" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="studentId" name="MaSv" required>
+                                        <label for="studentId">Mã Sinh Viên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="fullName" name="TenSv" required>
+                                        <label for="fullName">Họ Và Tên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="classId" name="Lop" required>
+                                        <label for="classId">Lớp</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="sdt" name="SDT" required>
+                                        <label for="sdt">SĐT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="email" name="Email" required>
+                                        <label for="email">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="teacherName" name="MaGv" required>
+                                            <option value="">-- Chọn Giảng Viên --</option>
+                                            @foreach (var gv in ViewBag.GiangViens)
+                                            {
+                                                <option value="@gv.MaGv">@gv.TenGv</option>
+                                            }
+                                        </select>
+                                        <label for="teacherName">Giảng Viên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="major" name="MaKhoa" required>
+                                            <option value="">-- Chọn Khoa --</option>
+                                            @foreach (var khoa in ViewBag.Khoas)
+                                            {
+                                                <option value="@khoa.MaKhoa">@khoa.TenKhoa</option>
+                                            }
+                                        </select>
+                                        <label for="major">Khoa</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="project" name="MaDt" required>
+                                            <option value="">-- Chọn Đề Tài --</option>
+                                            @foreach (var dt in ViewBag.DeTais)
+                                            {
+                                                <option value="@dt.MaDt">@dt.TenDt</option>
+                                            }
+                                        </select>
+                                        <label for="project">Đề Tài</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="supervisor" name="MaNpt" required>
+                                            <option value="">-- Chọn Người Phụ Trách --</option>
+                                            @foreach (var npt in ViewBag.NguoiPhuTrachs)
+                                            {
+                                                <option value="@npt.MaNpt">@npt.TenNpt</option>
+                                            }
+                                        </select>
+                                        <label for="supervisor">Người Phụ Trách</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="editFormSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-edit-alt me-2'></i>Thông tin sinh viên
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleEditForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong><i class='bx bx-error-circle'></i></strong> @TempData["ErrorMessage"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+                        <form asp-controller="Student" asp-action="Edit" asp-route-id="@ViewData["EditStudentId"]"
+                            method="post">
+                            <input type="hidden" name="OldMaSv" id="oldStudentId" />
+                            <input type="hidden" name="MaSv" id="editStudentIdHidden" />
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control @(ViewData.ModelState["MaSv"]?.Errors.Count > 0 ? "is-invalid" : "")" id="editStudentId" name="MaSv" required>
+                                        <label for="editStudentId">Mã Sinh Viên</label>
+                                        @if (ViewData.ModelState["MaSv"]?.Errors.Count > 0)
+                                        {
+                                            <div class="invalid-feedback">
+                                                @ViewData.ModelState["MaSv"].Errors.First().ErrorMessage
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editFullName" name="TenSv" required>
+                                        <label for="editFullName">Họ Và Tên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editClassId" name="Lop" required>
+                                        <label for="editClassId">Lớp</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editSdt" name="Sdt" required>
+                                        <label for="editSdt">SĐT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="editEmail" name="Email" required>
+                                        <label for="editEmail">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editTeacherName" name="MaGv" required>
+                                            <option value="">-- Chọn Giảng Viên --</option>
+                                            @foreach (var gv in ViewBag.GiangViens)
+                                            {
+                                                <option value="@gv.MaGv">@gv.TenGv</option>
+                                            }
+                                        </select>
+                                        <label for="editTeacherName">Giảng Viên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editMajor" name="MaKhoa" required>
+                                            <option value="">-- Chọn Khoa --</option>
+                                            @foreach (var khoa in ViewBag.Khoas)
+                                            {
+                                                <option value="@khoa.MaKhoa">@khoa.TenKhoa</option>
+                                            }
+                                        </select>
+                                        <label for="editMajor">Khoa</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editProject" name="MaDt" required>
+                                            <option value="">-- Chọn Đề Tài --</option>
+                                            @foreach (var dt in ViewBag.DeTais)
+                                            {
+                                                <option value="@dt.MaDt">@dt.TenDt</option>
+                                            }
+                                        </select>
+                                        <label for="editProject">Đề Tài</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editSupervisor" name="MaNpt" required>
+                                            <option value="">-- Chọn Người Phụ Trách --</option>
+                                            @foreach (var npt in ViewBag.NguoiPhuTrachs)
+                                            {
+                                                <option value="@npt.MaNpt">@npt.TenNpt</option>
+                                            }
+                                        </select>
+                                        <label for="editSupervisor">Người Phụ Trách</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleEditForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <style>
+                /* Loại bỏ hoàn toàn hiệu ứng transition */
+                #formSection,
+                #editFormSection {
+                    /* Không cần opacity hay transition nữa */
+                }
+            </style>
+
+            @section Scripts {
+                <script>
+                    function editStudent(studentId) {
+                        fetch(`/Student/Edit/${studentId}`, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest' // Đánh dấu là yêu cầu AJAX
+                            }
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Không tìm thấy sinh viên');
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                document.getElementById('oldStudentId').value = data.maSv || ''; // Lưu mã sinh viên gốc
+                                document.getElementById('editStudentId').value = data.maSv || '';
+                                document.getElementById('editStudentIdHidden').value = data.maSv || ''; // Điền vào input ẩn
+                                document.getElementById('editFullName').value = data.tenSv || '';
+                                document.getElementById('editClassId').value = data.lop || '';
+                                document.getElementById('editSdt').value = data.sdt || '';
+                                document.getElementById('editEmail').value = data.email || '';
+                                document.getElementById('editTeacherName').value = data.maGv || '';
+                                document.getElementById('editMajor').value = data.maKhoa || '';
+                                document.getElementById('editProject').value = data.maDt || '';
+                                document.getElementById('editSupervisor').value = data.maNpt || '';
+
+                                // Đặt giá trị MaSv vào ViewData hoặc DOM để dùng cho route
+                                document.getElementById('editFormSection').dataset.editStudentId = data.maSv; // Sử dụng data attribute
+                                toggleEditForm();
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Có lỗi khi tải thông tin sinh viên: ' + error.message);
+                            });
+                    }
+
+                    function confirmDelete(studentId) {
+                        if (confirm('Bạn có chắc muốn xóa sinh viên này không?')) {
+                            // Create form element for POST request
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/Student/Delete';
+
+                            // Add anti-forgery token
+                            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                            if (antiForgeryToken) {
+                                const tokenInput = document.createElement('input');
+                                tokenInput.type = 'hidden';
+                                tokenInput.name = '__RequestVerificationToken';
+                                tokenInput.value = antiForgeryToken.value;
+                                form.appendChild(tokenInput);
+                            }
+
+                            // Add studentId
+                            const idInput = document.createElement('input');
+                            idInput.type = 'hidden';
+                            idInput.name = 'id';
+                            idInput.value = studentId;
+                            form.appendChild(idInput);
+
+                            // Append form to body and submit
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    }
+
+                    function toggleEditForm() {
+                        const editFormSection = document.getElementById('editFormSection');
+                        const listSection = document.getElementById('listSection');
+                        const formSection = document.getElementById('formSection');
+
+                        if (editFormSection.style.display === 'none') {
+                            listSection.className = 'col-md-8';
+                            editFormSection.style.display = 'block';
+                            formSection.style.display = 'none'; // Ẩn form thêm nếu đang mở
+                        } else {
+                            listSection.className = 'col-md-12';
+                            editFormSection.style.display = 'none';
+                        }
+                    }
+
+                    function toggleForm() {
+                        const listSection = document.getElementById('listSection');
+                        const formSection = document.getElementById('formSection');
+                        const editFormSection = document.getElementById('editFormSection');
+
+                        if (formSection.style.display === 'none') {
+                            listSection.className = 'col-md-8';
+                            formSection.style.display = 'block';
+                            editFormSection.style.display = 'none'; // Ẩn form chỉnh sửa nếu đang mở
+                        } else {
+                            listSection.className = 'col-md-12';
+                            formSection.style.display = 'none';
+                        }
+                    }
+
+                    // Thêm event listener để cập nhật giá trị ẩn khi thay đổi mã sinh viên
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const editStudentIdInput = document.getElementById('editStudentId');
+                        if (editStudentIdInput) {
+                            editStudentIdInput.addEventListener('input', function() {
+                                document.getElementById('editStudentIdHidden').value = this.value;
+                            });
+                        }
+                    });
+
+                    // Search functionality
+                    document.getElementById('searchInput').addEventListener('keyup', function () {
+                        const input = this.value.toLowerCase();
+                        const table = document.getElementById('studentTable');
+                        const rows = table.getElementsByTagName('tr');
+
+                        for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
+                            const row = rows[i];
+                            const cells = row.getElementsByTagName('td');
+                            let found = false;
+
+                            for (let j = 0; j < cells.length - 1; j++) { // Exclude action column
+                                const cellText = cells[j].textContent.toLowerCase();
+                                if (cellText.includes(input)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            row.style.display = found ? '' : 'none';
+                        }
+                    });
+                </script>
+            }
+        </div>
+    </div>
+</div>

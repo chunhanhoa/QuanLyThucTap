@@ -1,0 +1,45 @@
+@model ABC.Models.Taikhoan
+@{
+    ViewData["Title"] = "Xóa người dùng";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title">Xác nhận xóa người dùng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class='bx bx-error-circle me-2'></i>
+                        Bạn có chắc chắn muốn xóa người dùng này?
+                    </div>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-4">ID</dt>
+                        <dd class="col-sm-8">@Model.MaTk</dd>
+                        
+                        <dt class="col-sm-4">Tên tài khoản</dt>
+                        <dd class="col-sm-8">@Model.TaiKhoan</dd>
+                        
+                        <dt class="col-sm-4">Quyền</dt>
+                        <dd class="col-sm-8">@Model.MaQuyenNavigation?.TenQuyen</dd>
+                    </dl>
+                    
+                    <form asp-action="DeleteConfirmed" asp-route-id="@Model.MaTk" method="post" class="mt-4">
+                        <input type="hidden" asp-for="MaTk" />
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger flex-grow-1">
+                                <i class='bx bx-trash me-1'></i> Xóa
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary flex-grow-1">
+                                <i class='bx bx-arrow-back me-1'></i> Trở về
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

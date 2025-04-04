@@ -1,0 +1,672 @@
+@model IEnumerable<ABC.Models.Phieudanhgium>
+@{
+    ViewData["Title"] = "Phiếu Đánh Giá";
+}
+
+<div class="app-container">
+    <div class="content-wrapper">
+        <div class="row p-4">
+            <div class="col-md-12" id="listSection">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Danh sách phiếu đánh giá</h5>
+                        <button class="btn btn-primary hover-scale" onclick="toggleForm()">
+                            <i class='bx bx-plus'></i> Thêm phiếu đánh giá
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class='bx bx-search'></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="searchInput"
+                                        placeholder="Tìm kiếm phiếu đánh giá...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="evaluationTable">
+                                <thead>
+                                    <tr>
+                                        <th>Mã PĐG</th>
+                                        <th>Ngày lập</th>
+                                        <th>Nhận xét</th>
+                                        <th>Tên GV</th>
+                                        <th>Tên SV</th>
+                                        <th>Điểm TB</th>
+                                        <th>Xếp loại</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var evaluation in Model)
+                                    {
+                                        var diemTb = evaluation.CtDanhgia.Any() ? evaluation.CtDanhgia.Average(ct => ct.DiemSo ?? 0m) : 0m;
+                                        var xepLoai = diemTb >= 8.5m ? "Giỏi" : diemTb >= 7.0m ? "Khá" : diemTb >= 5.0m ? "Trung bình" : "Yếu";
+                                        <tr>
+                                            <td>@evaluation.MaPdg</td>
+                                            <td>@(evaluation.NgayLap?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                            <td>@(evaluation.NhanXet ?? "N/A")</td>
+                                            <td>@(evaluation.MaGvNavigation?.TenGv ?? "N/A")</td>
+                                            <td>@(evaluation.MaSvNavigation?.TenSv ?? "N/A")</td>
+                                            <td><span class="badge bg-success">@diemTb.ToString("F1")</span></td>
+                                            <td>@xepLoai</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning hover-scale" title="Chỉnh sửa" onclick="editEvaluation(@evaluation.MaPdg)">
+                                                    <i class='bx bx-edit'></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger hover-scale" title="Xóa" onclick="confirmDelete(@evaluation.MaPdg)">
+                                                    <i class='bx bx-trash'></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-end">
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                                        <i class='bx bx-chevron-left'></i>
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                                        <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="formSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-plus-circle me-2'></i>Thêm phiếu đánh giá
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Evaluation" asp-action="Create" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="maPdg" name="MaPdg" required>
+                                        <label for="maPdg">Mã PĐG</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="ngayLap" name="NgayLap" required>
+                                        <label for="ngayLap">Ngày Lập</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" id="nhanXet" name="NhanXet" style="height: 100px"></textarea>
+                                        <label for="nhanXet">Nhận Xét</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="maGv" name="MaGv" required>
+                                            <option value="">-- Chọn Giảng Viên --</option>
+                                            @foreach (var gv in ViewBag.Giangviens)
+                                            {
+                                                <option value="@gv.MaGv">@gv.TenGv</option>
+                                            }
+                                        </select>
+                                        <label for="maGv">Giảng Viên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="maSv" name="MaSv" required>
+                                            <option value="">-- Chọn Sinh Viên --</option>
+                                            @foreach (var sv in ViewBag.Sinhviens)
+                                            {
+                                                <option value="@sv.MaSv">@sv.TenSv</option>
+                                            }
+                                        </select>
+                                        <label for="maSv">Sinh Viên</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="editFormSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-edit-alt me-2'></i>Thông tin phiếu đánh giá
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleEditForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Evaluation" asp-action="Edit" method="post">
+                            <input type="hidden" name="MaPdg" id="editMaPdgHidden" />
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="editMaPdg" name="MaPdg" readonly>
+                                        <label for="editMaPdg">Mã PĐG</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="editNgayLap" name="NgayLap" required>
+                                        <label for="editNgayLap">Ngày Lập</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" id="editNhanXet" name="NhanXet" style="height: 100px"></textarea>
+                                        <label for="editNhanXet">Nhận Xét</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editMaGv" name="MaGv" required>
+                                            <option value="">-- Chọn Giảng Viên --</option>
+                                            @foreach (var gv in ViewBag.Giangviens)
+                                            {
+                                                <option value="@gv.MaGv">@gv.TenGv</option>
+                                            }
+                                        </select>
+                                        <label for="editMaGv">Giảng Viên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editMaSv" name="MaSv" required>
+                                            <option value="">-- Chọn Sinh Viên --</option>
+                                            @foreach (var sv in ViewBag.Sinhviens)
+                                            {
+                                                <option value="@sv.MaSv">@sv.TenSv</option>
+                                            }
+                                        </select>
+                                        <label for="editMaSv">Sinh Viên</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleEditForm()">
+                                        <i class='bx bx-x'></i> Hủy
+                                    </button>
+                                    <button type="button" class="btn btn-info me-2" onclick="showDetailPanel(document.getElementById('editMaPdg').value)">
+                                        <i class='bx bx-detail'></i> Xem Chi Tiết
+                                    </button>
+                                    <button type="submit" class="btn btn-primary hover-scale">
+                                        <i class='bx bx-save'></i> Lưu thông tin
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="detailPanel" style="display: none;">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-detail me-2'></i>Chi tiết phiếu đánh giá
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="hideDetailPanel()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3">Danh sách đánh giá theo tuần</h6>
+                        <div id="weeksList" class="accordion accordion-flush"></div>
+                        <div class="text-center mt-4">
+                            <button class="btn btn-primary hover-scale" onclick="addNewWeekEvaluation()">
+                                <i class='bx bx-plus'></i> Thêm đánh giá tuần mới
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="editWeekFormSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-edit-alt me-2'></i>Chỉnh sửa đánh giá tuần
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleEditWeekForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form id="editWeekForm" asp-controller="Evaluation" asp-action="EditWeek" method="post">
+                            <input type="hidden" id="editWeekMaPdg" name="MaPdg" />
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="editWeekMaTuan" name="MaTuan" required>
+                                        <label for="editWeekMaTuan">Tuần</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" step="0.1" min="0" max="10" class="form-control" id="editWeekDiemSo" name="DiemSo" required>
+                                        <label for="editWeekDiemSo">Điểm</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="editWeekNgayLap" name="NgayLap" required>
+                                        <label for="editWeekNgayLap">Ngày Lập</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" id="editWeekGhiChu" name="GhiChu" style="height: 100px"></textarea>
+                                        <label for="editWeekGhiChu">Ghi Chú</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleEditWeekForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #formSection, #editFormSection, #detailPanel, #editWeekFormSection {
+        /* Không cần transition */
+    }
+</style>
+
+@section Scripts {
+    <script>
+        let currentMaPdg = null; // Biến để lưu MaPdg hiện tại
+
+        function toggleForm() {
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+            const editFormSection = document.getElementById('editFormSection');
+            const detailPanel = document.getElementById('detailPanel');
+            const editWeekFormSection = document.getElementById('editWeekFormSection');
+
+            if (formSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                formSection.style.display = 'block';
+                editFormSection.style.display = 'none';
+                detailPanel.style.display = 'none';
+                editWeekFormSection.style.display = 'none';
+            } else {
+                listSection.className = 'col-md-12';
+                formSection.style.display = 'none';
+            }
+        }
+
+        function toggleEditForm() {
+            const listSection = document.getElementById('listSection');
+            const editFormSection = document.getElementById('editFormSection');
+            const formSection = document.getElementById('formSection');
+            const detailPanel = document.getElementById('detailPanel');
+            const editWeekFormSection = document.getElementById('editWeekFormSection');
+
+            if (editFormSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                editFormSection.style.display = 'block';
+                formSection.style.display = 'none';
+                detailPanel.style.display = 'none';
+                editWeekFormSection.style.display = 'none';
+            } else {
+                listSection.className = 'col-md-12';
+                editFormSection.style.display = 'none';
+            }
+        }
+
+        function toggleEditWeekForm() {
+            const listSection = document.getElementById('listSection');
+            const editWeekFormSection = document.getElementById('editWeekFormSection');
+            const formSection = document.getElementById('formSection');
+            const editFormSection = document.getElementById('editFormSection');
+            const detailPanel = document.getElementById('detailPanel');
+
+            if (editWeekFormSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                editWeekFormSection.style.display = 'block';
+                formSection.style.display = 'none';
+                editFormSection.style.display = 'none';
+                detailPanel.style.display = 'none';
+            } else {
+                listSection.className = 'col-md-12';
+                editWeekFormSection.style.display = 'none';
+            }
+        }
+
+        function editEvaluation(maPdg) {
+            fetch(`/Evaluation/Edit/${maPdg}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Không tìm thấy phiếu đánh giá');
+                return response.json();
+            })
+            .then(data => {
+                currentMaPdg = data.maPdg; // Lưu MaPdg hiện tại
+                document.getElementById('editMaPdg').value = data.maPdg || '';
+                document.getElementById('editMaPdgHidden').value = data.maPdg || '';
+                document.getElementById('editNgayLap').value = data.ngayLap || '';
+                document.getElementById('editNhanXet').value = data.nhanXet || '';
+                document.getElementById('editMaGv').value = data.maGv || '';
+                document.getElementById('editMaSv').value = data.maSv || '';
+                toggleEditForm();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi khi tải thông tin phiếu đánh giá: ' + error.message);
+            });
+        }
+
+        function confirmDelete(maPdg) {
+            if (confirm('Bạn có chắc muốn xóa phiếu đánh giá này không?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Evaluation/Delete';
+
+                const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiForgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiForgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = maPdg;
+                form.appendChild(idInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function showDetailPanel(maPdg) {
+            currentMaPdg = maPdg; // Cập nhật MaPdg hiện tại
+            fetch(`/Evaluation/Details/${maPdg}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Không tìm thấy chi tiết');
+                return response.json();
+            })
+            .then(data => {
+                const weeksList = document.getElementById('weeksList');
+                weeksList.innerHTML = '';
+                data.forEach((week, index) => {
+                    const accordionItem = `
+                        <div class="accordion-item border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#week${index}" aria-expanded="false" aria-controls="week${index}">
+                                    <span class="fw-medium">Tuần ${week.maTuan}</span>
+                                    <span class="badge bg-success ms-2">${week.diemSo.toFixed(1)}</span>
+                                </button>
+                            </h2>
+                            <div id="week${index}" class="accordion-collapse collapse">
+                                <div class="accordion-body pt-0">
+                                    <div class="detail-item mb-2">
+                                        <h6 class="detail-label">Điểm số</h6>
+                                        <p class="detail-value"><span class="badge bg-success px-3 py-2">${week.diemSo.toFixed(1)}</span></p>
+                                    </div>
+                                    <div class="detail-item mb-2">
+                                        <h6 class="detail-label">Ngày lập</h6>
+                                        <p class="detail-value">${week.ngayLap}</p>
+                                    </div>
+                                    <div class="detail-item mb-3">
+                                        <h6 class="detail-label">Ghi chú</h6>
+                                        <p class="detail-value">${week.ghiChu}</p>
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-warning" onclick="editWeekEvaluation(${week.maPdg}, ${week.maTuan})">
+                                            <i class='bx bx-edit'></i> Sửa
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="confirmDeleteWeek(${week.maPdg}, ${week.maTuan})">
+                                            <i class='bx bx-trash'></i> Xóa
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    weeksList.innerHTML += accordionItem;
+                });
+
+                const listSection = document.getElementById('listSection');
+                const detailPanel = document.getElementById('detailPanel');
+                const formSection = document.getElementById('formSection');
+                const editFormSection = document.getElementById('editFormSection');
+                const editWeekFormSection = document.getElementById('editWeekFormSection');
+
+                listSection.className = 'col-md-8';
+                detailPanel.style.display = 'block';
+                formSection.style.display = 'none';
+                editFormSection.style.display = 'none';
+                editWeekFormSection.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi khi tải chi tiết: ' + error.message);
+            });
+        }
+
+        function hideDetailPanel() {
+            const listSection = document.getElementById('listSection');
+            const detailPanel = document.getElementById('detailPanel');
+
+            if (document.getElementById('formSection').style.display === 'none' &&
+                document.getElementById('editFormSection').style.display === 'none' &&
+                document.getElementById('editWeekFormSection').style.display === 'none') {
+                listSection.className = 'col-md-12';
+            }
+            detailPanel.style.display = 'none';
+        }
+
+        function editWeekEvaluation(maPdg, maTuan) {
+            fetch(`/Evaluation/Details/${maPdg}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const week = data.find(w => w.maTuan === maTuan);
+                document.getElementById('editWeekMaPdg').value = week.maPdg;
+                document.getElementById('editWeekMaTuan').value = week.maTuan;
+                document.getElementById('editWeekDiemSo').value = week.diemSo;
+                document.getElementById('editWeekNgayLap').value = week.ngayLap;
+                document.getElementById('editWeekGhiChu').value = week.ghiChu;
+                toggleEditWeekForm();
+            });
+        }
+
+        function confirmDeleteWeek(maPdg, maTuan) {
+            if (confirm(`Bạn có chắc muốn xóa đánh giá tuần ${maTuan} không?`)) {
+                fetch('/Evaluation/DeleteWeek', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `maPdg=${maPdg}&maTuan=${maTuan}&__RequestVerificationToken=${document.querySelector('input[name="__RequestVerificationToken"]').value}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cập nhật danh sách chi tiết
+                        updateWeeksList(data.details);
+                        // Làm mới trang để cập nhật điểm trung bình
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi khi xóa chi tiết: ' + error.message);
+                });
+            }
+        }
+
+        function addNewWeekEvaluation() {
+            const editWeekMaPdg = document.getElementById('editMaPdg')?.value;
+            if (!editWeekMaPdg) {
+                alert('Vui lòng chọn một phiếu đánh giá trước khi thêm tuần mới.');
+                return;
+            }
+            document.getElementById('editWeekMaPdg').value = editWeekMaPdg;
+            document.getElementById('editWeekMaTuan').value = '';
+            document.getElementById('editWeekDiemSo').value = '';
+            document.getElementById('editWeekNgayLap').value = getCurrentDate();
+            document.getElementById('editWeekGhiChu').value = '';
+            toggleEditWeekForm();
+        }
+
+        function getCurrentDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function updateWeeksList(data) {
+            const weeksList = document.getElementById('weeksList');
+            weeksList.innerHTML = '';
+            data.forEach((week, index) => {
+                const accordionItem = `
+                    <div class="accordion-item border-bottom">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#week${index}" aria-expanded="false" aria-controls="week${index}">
+                                <span class="fw-medium">Tuần ${week.maTuan}</span>
+                                <span class="badge bg-success ms-2">${week.diemSo.toFixed(1)}</span>
+                            </button>
+                        </h2>
+                        <div id="week${index}" class="accordion-collapse collapse">
+                            <div class="accordion-body pt-0">
+                                <div class="detail-item mb-2">
+                                    <h6 class="detail-label">Điểm số</h6>
+                                    <p class="detail-value"><span class="badge bg-success px-3 py-2">${week.diemSo.toFixed(1)}</span></p>
+                                </div>
+                                <div class="detail-item mb-2">
+                                    <h6 class="detail-label">Ngày lập</h6>
+                                    <p class="detail-value">${week.ngayLap}</p>
+                                </div>
+                                <div class="detail-item mb-3">
+                                    <h6 class="detail-label">Ghi chú</h6>
+                                    <p class="detail-value">${week.ghiChu}</p>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-sm btn-warning" onclick="editWeekEvaluation(${week.maPdg}, ${week.maTuan})">
+                                        <i class='bx bx-edit'></i> Sửa
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="confirmDeleteWeek(${week.maPdg}, ${week.maTuan})">
+                                        <i class='bx bx-trash'></i> Xóa
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                weeksList.innerHTML += accordionItem;
+            });
+        }
+
+        document.getElementById('editWeekForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('/Evaluation/EditWeek', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Cập nhật danh sách chi tiết
+                    updateWeeksList(data.details);
+                    toggleEditWeekForm();
+                    // Làm mới trang để cập nhật điểm trung bình
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi khi lưu chi tiết: ' + error.message);
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const input = this.value.toLowerCase();
+            const table = document.getElementById('evaluationTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+
+                for (let j = 0; j < cells.length - 1; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.includes(input)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                row.style.display = found ? '' : 'none';
+            }
+        });
+    </script>
+}

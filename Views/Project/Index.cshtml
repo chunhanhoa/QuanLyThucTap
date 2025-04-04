@@ -1,0 +1,290 @@
+@model IEnumerable<ABC.Models.Detai>
+@{
+    ViewData["Title"] = "Đề Tài";
+}
+
+<div class="app-container">
+    <div class="content-wrapper">
+        <div class="row p-4">
+            <div class="@(ViewBag.ShowForm == true ? "col-md-8" : "col-md-12")" id="listSection">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Danh sách đề tài</h5>
+                        <button class="btn btn-primary hover-scale" onclick="toggleForm()">
+                            <i class='bx bx-plus'></i> Thêm đề tài
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class='bx bx-search'></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="searchInput" placeholder="Tìm kiếm đề tài...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="projectTable">
+                                <thead>
+                                    <tr>
+                                        <th>Mã Đề Tài</th>
+                                        <th>Tên Đề Tài</th>
+                                        <th>Mô Tả</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var project in Model)
+                                    {
+                                        <tr>
+                                            <td>@project.MaDt</td>
+                                            <td>@project.TenDt</td>
+                                            <td>@(project.MoTa ?? "N/A")</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning hover-scale" title="Chỉnh sửa" onclick="editProject('@project.MaDt')">
+                                                    <i class='bx bx-edit'></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger hover-scale" title="Xóa" onclick="confirmDelete('@project.MaDt')">
+                                                    <i class='bx bx-trash'></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-end">
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                                        <i class='bx bx-chevron-left'></i>
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                                        <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="formSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-book-add me-2'></i>Thêm đề tài
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Project" asp-action="Create" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="projectId" name="MaDt" required>
+                                        <label for="projectId">Mã Đề Tài</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="projectName" name="TenDt" required>
+                                        <label for="projectName">Tên Đề Tài</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" id="description" name="MoTa" style="height: 100px"></textarea>
+                                        <label for="description">Mô Tả Đề Tài</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="editFormSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-edit-alt me-2'></i>Thông tin đề tài
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleEditForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Project" asp-action="Edit" method="post">
+                            <input type="hidden" name="MaDt" id="editProjectIdHidden" />
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editProjectId" readonly>
+                                        <label for="editProjectId">Mã Đề Tài</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editProjectName" name="TenDt" required>
+                                        <label for="editProjectName">Tên Đề Tài</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" id="editDescription" name="MoTa" style="height: 100px"></textarea>
+                                        <label for="editDescription">Mô Tả Đề Tài</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleEditForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #formSection, #editFormSection {
+        /* Không cần transition */
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function editProject(projectId) {
+            fetch(`/Project/Edit/${projectId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không tìm thấy đề tài');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('editProjectId').value = data.maDt || '';
+                document.getElementById('editProjectIdHidden').value = data.maDt || '';
+                document.getElementById('editProjectName').value = data.tenDt || '';
+                document.getElementById('editDescription').value = data.moTa || '';
+                toggleEditForm();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi khi tải thông tin đề tài: ' + error.message);
+            });
+        }
+
+        function confirmDelete(projectId) {
+            if (confirm('Bạn có chắc muốn xóa đề tài này không?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Project/Delete';
+
+                const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiForgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiForgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = projectId;
+                form.appendChild(idInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function toggleEditForm() {
+            const editFormSection = document.getElementById('editFormSection');
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+
+            if (editFormSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                editFormSection.style.display = 'block';
+                formSection.style.display = 'none';
+            } else {
+                listSection.className = 'col-md-12';
+                editFormSection.style.display = 'none';
+            }
+        }
+
+        function toggleForm() {
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+            const editFormSection = document.getElementById('editFormSection');
+
+            if (formSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                formSection.style.display = 'block';
+                editFormSection.style.display = 'none';
+            } else {
+                listSection.className = 'col-md-12';
+                formSection.style.display = 'none';
+            }
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const input = this.value.toLowerCase();
+            const table = document.getElementById('projectTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+
+                for (let j = 0; j < cells.length - 1; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.includes(input)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                row.style.display = found ? '' : 'none';
+            }
+        });
+    </script>
+}

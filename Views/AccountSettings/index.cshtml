@@ -1,0 +1,331 @@
+@model IEnumerable<ABC.Models.Taikhoan>
+@{
+    ViewData["Title"] = "Cài Đặt Tài Khoản";
+}
+
+<div class="app-container">
+    <div class="content-wrapper">
+        <div class="row p-4">
+            <div class="col-md-12" id="listSection">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Danh sách tài khoản</h5>
+                        <button class="btn btn-primary hover-scale" onclick="toggleForm()">
+                            <i class='bx bx-plus'></i> Thêm tài khoản
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Hiển thị thông báo -->
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                @TempData["SuccessMessage"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                @TempData["ErrorMessage"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class='bx bx-search'></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="searchInput"
+                                        placeholder="Tìm kiếm tài khoản...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="accountTable">
+                                <thead>
+                                    <tr>
+                                        <th>Mã TK</th>
+                                        <th>Tên tài khoản</th>
+                                        <th>Mật khẩu</th>
+                                        <th>Quyền</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var account in Model)
+                                    {
+                                        <tr>
+                                            <td>@account.MaTk</td>
+                                            <td>@account.TaiKhoan</td>
+                                            <td>••••••••</td>
+                                            <td>@(account.MaQuyenNavigation?.TenQuyen ?? "N/A")</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning hover-scale" title="Chỉnh sửa"
+                                                    onclick="editAccount(@account.MaTk)">
+                                                    <i class='bx bx-edit'></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger hover-scale" title="Xóa"
+                                                    onclick="confirmDelete(@account.MaTk)">
+                                                    <i class='bx bx-trash'></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-end">
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                                        <i class='bx bx-chevron-left'></i>
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                                        <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="formSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-user-plus me-2'></i>Thêm tài khoản mới
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="AccountSettings" asp-action="Create" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="maTk" name="MaTk" required>
+                                        <label for="maTk">Mã Tài Khoản</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="taiKhoan" name="TaiKhoan" required>
+                                        <label for="taiKhoan">Tên Tài Khoản</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="password" class="form-control" id="matKhau" name="MatKhau" required>
+                                        <label for="matKhau">Mật Khẩu</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="maQuyen" name="MaQuyen" required>
+                                            <option value="">-- Chọn quyền --</option>
+                                            @foreach (var role in ViewBag.Roles)
+                                            {
+                                                <option value="@role.MaQuyen">@role.TenQuyen</option>
+                                            }
+                                        </select>
+                                        <label for="maQuyen">Quyền</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="editFormSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-edit-alt me-2'></i>Chỉnh sửa tài khoản
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleEditForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="AccountSettings" asp-action="Edit" method="post">
+                            <input type="hidden" name="MaTk" id="editMaTkHidden" />
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="editMaTk" name="MaTk" readonly>
+                                        <label for="editMaTk">Mã Tài Khoản</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editTaiKhoan" name="TaiKhoan" required>
+                                        <label for="editTaiKhoan">Tên Tài Khoản</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="password" class="form-control" id="editMatKhau" name="MatKhau" required>
+                                        <label for="editMatKhau">Mật Khẩu</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editMaQuyen" name="MaQuyen" required>
+                                            <option value="">-- Chọn quyền --</option>
+                                            @foreach (var role in ViewBag.Roles)
+                                            {
+                                                <option value="@role.MaQuyen">@role.TenQuyen</option>
+                                            }
+                                        </select>
+                                        <label for="editMaQuyen">Quyền</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleEditForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #formSection, #editFormSection {
+        /* Không cần transition */
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function toggleForm() {
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+            const editFormSection = document.getElementById('editFormSection');
+
+            if (formSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                formSection.style.display = 'block';
+                editFormSection.style.display = 'none'; // Ẩn form chỉnh sửa nếu đang mở
+            } else {
+                listSection.className = 'col-md-12';
+                formSection.style.display = 'none';
+            }
+        }
+
+        function toggleEditForm() {
+            const editFormSection = document.getElementById('editFormSection');
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+
+            if (editFormSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                editFormSection.style.display = 'block';
+                formSection.style.display = 'none'; // Ẩn form thêm nếu đang mở
+            } else {
+                listSection.className = 'col-md-12';
+                editFormSection.style.display = 'none';
+            }
+        }
+
+        function editAccount(maTk) {
+            fetch(`/AccountSettings/Edit/${maTk}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Không tìm thấy tài khoản');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('editMaTk').value = data.maTk || '';
+                document.getElementById('editMaTkHidden').value = data.maTk || '';
+                document.getElementById('editTaiKhoan').value = data.taiKhoan || '';
+                document.getElementById('editMatKhau').value = data.matKhau || '';
+                document.getElementById('editMaQuyen').value = data.maQuyen || '';
+                toggleEditForm(); // Hiển thị form chỉnh sửa
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi khi tải thông tin tài khoản: ' + error.message);
+            });
+        }
+
+        function confirmDelete(maTk) {
+            if (confirm('Bạn có chắc muốn xóa tài khoản này không?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/AccountSettings/Delete';
+
+                const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiForgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiForgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = maTk;
+                form.appendChild(idInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const input = this.value.toLowerCase();
+            const table = document.getElementById('accountTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+
+                for (let j = 0; j < cells.length - 1; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.includes(input)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                row.style.display = found ? '' : 'none';
+            }
+        });
+    </script>
+}

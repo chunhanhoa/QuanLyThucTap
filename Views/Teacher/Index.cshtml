@@ -1,0 +1,347 @@
+@model IEnumerable<ABC.Models.Giangvien>
+@{
+    ViewData["Title"] = "Giảng Viên";
+}
+
+<div class="app-container">
+    <div class="content-wrapper">
+        <div class="row p-4">
+            <div class="@(ViewBag.ShowForm == true ? "col-md-8" : "col-md-12")" id="listSection">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Danh sách giảng viên hướng dẫn</h5>
+                        <button class="btn btn-primary hover-scale" onclick="toggleForm()">
+                            <i class='bx bx-plus'></i> Thêm giảng viên
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class='bx bx-search'></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="searchInput" placeholder="Tìm kiếm giảng viên...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="teacherTable">
+                                <thead>
+                                    <tr>
+                                        <th>Mã GV</th>
+                                        <th>Họ tên</th>
+                                        <th>Bộ môn</th>
+                                        <th>Email</th>
+                                        <th>Số điện thoại</th>
+                                        <th>Số SV hướng dẫn</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var teacher in Model)
+                                    {
+                                        <tr>
+                                            <td>@teacher.MaGv</td>
+                                            <td>@teacher.TenGv</td>
+                                            <td>@(teacher.BoMon ?? "N/A")</td>
+                                            <td>@(teacher.Email ?? "N/A")</td>
+                                            <td>@(teacher.Sdt ?? "N/A")</td>
+                                            <td><span class="badge bg-primary">@teacher.Sinhviens.Count()</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning hover-scale" title="Chỉnh sửa" onclick="editTeacher('@teacher.MaGv')">
+                                                    <i class='bx bx-edit'></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger hover-scale" title="Xóa" onclick="confirmDelete('@teacher.MaGv')">
+                                                    <i class='bx bx-trash'></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-end">
+                                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                                        <i class='bx bx-chevron-left'></i>
+                                    </a>
+                                </li>
+                                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                                {
+                                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                                        <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="formSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-user-plus me-2'></i>Thêm giảng viên
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Teacher" asp-action="Create" method="post">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="teacherId" name="MaGv" required>
+                                        <label for="teacherId">Mã Giảng Viên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="fullName" name="TenGv" required>
+                                        <label for="fullName">Họ Và Tên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="subject" name="BoMon" required>
+                                        <label for="subject">Bộ Môn</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="phone" name="Sdt" required>
+                                        <label for="phone">SĐT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="email" name="Email" required>
+                                        <label for="email">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="faculty" name="MaKhoa" required>
+                                            <option value="">-- Chọn Khoa --</option>
+                                            @foreach (var khoa in ViewBag.Khoas)
+                                            {
+                                                <option value="@khoa.MaKhoa">@khoa.TenKhoa</option>
+                                            }
+                                        </select>
+                                        <label for="faculty">Khoa</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" id="editFormSection" style="display: none;">
+                <div class="card modern-form">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class='bx bx-edit-alt me-2'></i>Thông tin giảng viên
+                        </h5>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleEditForm()">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Teacher" asp-action="Edit" method="post">
+                            <input type="hidden" name="MaGv" id="editTeacherIdHidden" />
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editTeacherId" readonly>
+                                        <label for="editTeacherId">Mã Giảng Viên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editFullName" name="TenGv" required>
+                                        <label for="editFullName">Họ Và Tên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editSubject" name="BoMon" required>
+                                        <label for="editSubject">Bộ Môn</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="editPhone" name="Sdt" required>
+                                        <label for="editPhone">SĐT</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="editEmail" name="Email" required>
+                                        <label for="editEmail">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="editFaculty" name="MaKhoa" required>
+                                            <option value="">-- Chọn Khoa --</option>
+                                            @foreach (var khoa in ViewBag.Khoas)
+                                            {
+                                                <option value="@khoa.MaKhoa">@khoa.TenKhoa</option>
+                                            }
+                                        </select>
+                                        <label for="editFaculty">Khoa</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleEditForm()">
+                                    <i class='bx bx-x'></i> Hủy
+                                </button>
+                                <button type="submit" class="btn btn-primary hover-scale">
+                                    <i class='bx bx-save'></i> Lưu thông tin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #formSection, #editFormSection {
+        /* Không cần transition */
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function editTeacher(teacherId) {
+            fetch(`/Teacher/Edit/${teacherId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không tìm thấy giảng viên');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('editTeacherId').value = data.maGv || '';
+                document.getElementById('editTeacherIdHidden').value = data.maGv || '';
+                document.getElementById('editFullName').value = data.tenGv || '';
+                document.getElementById('editSubject').value = data.boMon || '';
+                document.getElementById('editPhone').value = data.sdt || '';
+                document.getElementById('editEmail').value = data.email || '';
+                document.getElementById('editFaculty').value = data.maKhoa || '';
+                toggleEditForm();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi khi tải thông tin giảng viên: ' + error.message);
+            });
+        }
+
+        function confirmDelete(teacherId) {
+            if (confirm('Bạn có chắc muốn xóa giảng viên này không?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Teacher/Delete';
+
+                const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (antiForgeryToken) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = antiForgeryToken.value;
+                    form.appendChild(tokenInput);
+                }
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = teacherId;
+                form.appendChild(idInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function toggleEditForm() {
+            const editFormSection = document.getElementById('editFormSection');
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+
+            if (editFormSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                editFormSection.style.display = 'block';
+                formSection.style.display = 'none';
+            } else {
+                listSection.className = 'col-md-12';
+                editFormSection.style.display = 'none';
+            }
+        }
+
+        function toggleForm() {
+            const listSection = document.getElementById('listSection');
+            const formSection = document.getElementById('formSection');
+            const editFormSection = document.getElementById('editFormSection');
+
+            if (formSection.style.display === 'none') {
+                listSection.className = 'col-md-8';
+                formSection.style.display = 'block';
+                editFormSection.style.display = 'none';
+            } else {
+                listSection.className = 'col-md-12';
+                formSection.style.display = 'none';
+            }
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const input = this.value.toLowerCase();
+            const table = document.getElementById('teacherTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+
+                for (let j = 0; j < cells.length - 1; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.includes(input)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                row.style.display = found ? '' : 'none';
+            }
+        });
+    </script>
+}
