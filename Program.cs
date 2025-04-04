@@ -182,66 +182,83 @@ if (app.Environment.IsProduction())
             var canConnect = context.Database.CanConnect();
             logger.LogInformation("Kết nối tới database: {CanConnect}", canConnect);
             
-            try 
+            if (canConnect)
             {
-                // Thử tạo database nếu cần
-                logger.LogInformation("Đang tạo database nếu cần...");
-                context.Database.EnsureCreated();
-                logger.LogInformation("Đã đảm bảo database được tạo");
+                logger.LogInformation("Tạo schema nếu cần...");
                 
-                // Kiểm tra các bảng đã tồn tại chưa
+                // Tạo các bảng cơ bản (quyen, taikhoan) một cách thủ công
                 var conn = context.Database.GetDbConnection();
                 if (conn.State != System.Data.ConnectionState.Open)
-                {
                     conn.Open();
-                }
                 
                 using var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'";
-                using var reader = cmd.ExecuteReader();
-                logger.LogInformation("Danh sách các bảng trong schema public:");
-                while (reader.Read())
+                
+                // Kiểm tra bảng taikhoan đã tồn tại chưa
+                cmd.CommandText = "SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'taikhoan')";
+                var taikhoanExists = (bool)cmd.ExecuteScalar();
+                
+                if (!taikhoanExists)
                 {
-                    logger.LogInformation("- {0}", reader.GetString(0));
+                    logger.LogInformation("Tạo bảng taikhoan và quyen...");
+                    
+                    // Tạo bảng quyen trước
+                    using var createQuyenCmd = conn.CreateCommand();
+                    createQuyenCmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS quyen (
+                            maquyen INTEGER PRIMARY KEY,
+                            tenquyen VARCHAR(50) NOT NULL
+                        )";
+                    createQuyenCmd.ExecuteNonQuery();
+                    
+                    // Tạo bảng taikhoan
+                    using var createTaikhoanCmd = conn.CreateCommand();
+                    createTaikhoanCmd.CommandText = @"
+                        CREATE TABLE IF NOT EXISTS taikhoan (
+                            matk SERIAL PRIMARY KEY,
+                            taikhoan VARCHAR(50) UNIQUE NOT NULL,
+                            matkhau VARCHAR(50),
+                            maquyen INTEGER REFERENCES quyen(maquyen)
+                        )";
+                    createTaikhoanCmd.ExecuteNonQuery();
+                    
+                    // Thêm dữ liệu mẫu
+                    using var insertQuyenCmd = conn.CreateCommand();
+                    insertQuyenCmd.CommandText = @"
+                        INSERT INTO quyen (maquyen, tenquyen) VALUES 
+                        (1, 'Admin'), 
+                        (2, 'Giảng viên'), 
+                        (3, 'Sinh viên')
+                        ON CONFLICT (maquyen) DO NOTHING";
+                    insertQuyenCmd.ExecuteNonQuery();
+                    
+                    using var insertAdminCmd = conn.CreateCommand();
+                    insertAdminCmd.CommandText = @"
+                        INSERT INTO taikhoan (taikhoan, matkhau, maquyen) VALUES 
+                        ('admin1', '123456', 1)
+                        ON CONFLICT DO NOTHING";
+                    insertAdminCmd.ExecuteNonQuery();
+                    
+                    logger.LogInformation("Đã tạo bảng và dữ liệu mẫu thành công");
                 }
+                else
+                {
+                    logger.LogInformation("Bảng taikhoan đã tồn tại");
+                    
+                    // Kiểm tra và in ra số lượng tài khoản
+                    cmd.CommandText = "SELECT COUNT(*) FROM taikhoan";
+                    var count = Convert.ToInt32(cmd.ExecuteScalar());
+                    logger.LogInformation("Số lượng tài khoản: {Count}", count);
+                }
+                
+                // Đảm bảo có dữ liệu cơ bản
+                context.EnsureSeeded();
             }
-            catch (Exception ex)
+            else
             {
-                logger.LogError(ex, "Lỗi khi kiểm tra/tạo database");
+                logger.LogWarning("Không thể kết nối tới PostgreSQL database!");
             }
             
-            // Thêm thời gian chờ và số lần thử lại
-            var retryCount = 5;
-            while (retryCount > 0)
-            {
-                try
-                {
-                    logger.LogInformation("Đang tạo các bảng hoặc áp dụng migrations...");
-                    
-                    // Vì chưa có migrations nên dùng EnsureCreated để tạo schema
-                    if (!context.Database.EnsureCreated())
-                    {
-                        logger.LogWarning("Không thể tạo database hoặc database đã tồn tại");
-                    }
-                    
-                    logger.LogInformation("Hoàn tất quá trình tạo schema");
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    retryCount--;
-                    if (retryCount == 0)
-                    {
-                        logger.LogError(ex, "Không thể tạo database schema sau nhiều lần thử");
-                        throw; // Nếu đã hết số lần thử, ném ngoại lệ
-                    }
-                    
-                    logger.LogError(ex, "Lỗi khi tạo database. Thử lại sau 5 giây. Còn {RetryCount} lần thử.", retryCount);
-                    
-                    // Đợi 5 giây trước khi thử lại
-                    System.Threading.Thread.Sleep(5000);
-                }
-            }
+            logger.LogInformation("Hoàn tất quá trình khởi tạo database");
         }
         catch (Exception ex)
         {
