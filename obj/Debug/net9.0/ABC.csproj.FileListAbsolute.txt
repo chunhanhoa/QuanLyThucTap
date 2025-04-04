@@ -1157,6 +1157,7 @@ C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Lap trinh web\QuanLyThucTap\obj\
 C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Lap trinh web\QuanLyThucTap\obj\Debug\net9.0\ABC.genruntimeconfig.cache
 C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Lap trinh web\QuanLyThucTap\obj\Debug\net9.0\ref\ABC.dll
 C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Youtube\QuanLyThucTap\bin\Debug\net9.0\appsettings.json
+C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Youtube\QuanLyThucTap\bin\Debug\net9.0\appsettings.Production.json
 C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Youtube\QuanLyThucTap\bin\Debug\net9.0\ABC.staticwebassets.runtime.json
 C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Youtube\QuanLyThucTap\bin\Debug\net9.0\ABC.staticwebassets.endpoints.json
 C:\Users\ASUS\OneDrive\Máy tính\Code\All_File\Youtube\QuanLyThucTap\bin\Debug\net9.0\ABC.exe

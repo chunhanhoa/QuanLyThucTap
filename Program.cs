@@ -14,10 +14,42 @@ builder.Services.AddControllersWithViews();
 // Thay đổi cấu hình dịch vụ DbContext - Sửa cách đăng ký để không xung đột với OnConfiguring
 if (builder.Environment.IsProduction())
 {
-    // Cách đơn giản hơn để tránh xung đột provider
+    // Lấy thông tin connection string từ cấu hình
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        Console.WriteLine("CẢNH BÁO: Connection string 'DefaultConnection' không được tìm thấy!");
+        throw new InvalidOperationException("Connection string 'DefaultConnection' không được cấu hình cho môi trường Production.");
+    }
+
+    // In thông tin kết nối (không hiển thị mật khẩu)
+    var sanitizedConnectionString = connectionString;
+    if (connectionString.Contains("Password="))
+    {
+        var passwordStart = connectionString.IndexOf("Password=");
+        var passwordEnd = connectionString.IndexOf(";", passwordStart);
+        if (passwordEnd == -1) passwordEnd = connectionString.Length;
+        
+        sanitizedConnectionString = connectionString.Substring(0, passwordStart) + 
+                                   "Password=*****" + 
+                                   (passwordEnd < connectionString.Length ? connectionString.Substring(passwordEnd) : "");
+    }
+    Console.WriteLine($"Kết nối PostgreSQL: {sanitizedConnectionString}");
+
+    // Đăng ký DbContext với PostgreSQL
     builder.Services.AddDbContext<QlpcthucTapContext>(options =>
     {
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+        options.UseNpgsql(connectionString, npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorCodesToAdd: null);
+        });
+        
+        // Bật chi tiết logging để gỡ lỗi
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
     });
 }
 else
