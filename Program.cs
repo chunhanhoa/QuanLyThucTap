@@ -182,9 +182,33 @@ if (app.Environment.IsProduction())
             var canConnect = context.Database.CanConnect();
             logger.LogInformation("Kết nối tới database: {CanConnect}", canConnect);
             
-            // Tạo database nếu chưa tồn tại
-            context.Database.EnsureCreated();
-            logger.LogInformation("Đã đảm bảo database được tạo");
+            try 
+            {
+                // Thử tạo database nếu cần
+                logger.LogInformation("Đang tạo database nếu cần...");
+                context.Database.EnsureCreated();
+                logger.LogInformation("Đã đảm bảo database được tạo");
+                
+                // Kiểm tra các bảng đã tồn tại chưa
+                var conn = context.Database.GetDbConnection();
+                if (conn.State != System.Data.ConnectionState.Open)
+                {
+                    conn.Open();
+                }
+                
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'";
+                using var reader = cmd.ExecuteReader();
+                logger.LogInformation("Danh sách các bảng trong schema public:");
+                while (reader.Read())
+                {
+                    logger.LogInformation("- {0}", reader.GetString(0));
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Lỗi khi kiểm tra/tạo database");
+            }
             
             // Thêm thời gian chờ và số lần thử lại
             var retryCount = 5;
@@ -192,21 +216,27 @@ if (app.Environment.IsProduction())
             {
                 try
                 {
-                    logger.LogInformation("Đang chạy migrations...");
-                    context.Database.Migrate();
-                    logger.LogInformation("Migration thành công");
-                    break; // Thoát khỏi vòng lặp nếu migration thành công
+                    logger.LogInformation("Đang tạo các bảng hoặc áp dụng migrations...");
+                    
+                    // Vì chưa có migrations nên dùng EnsureCreated để tạo schema
+                    if (!context.Database.EnsureCreated())
+                    {
+                        logger.LogWarning("Không thể tạo database hoặc database đã tồn tại");
+                    }
+                    
+                    logger.LogInformation("Hoàn tất quá trình tạo schema");
+                    break;
                 }
                 catch (Exception ex)
                 {
                     retryCount--;
                     if (retryCount == 0)
                     {
-                        logger.LogError(ex, "Không thể chạy migrations sau nhiều lần thử");
+                        logger.LogError(ex, "Không thể tạo database schema sau nhiều lần thử");
                         throw; // Nếu đã hết số lần thử, ném ngoại lệ
                     }
                     
-                    logger.LogError(ex, "Lỗi khi migrate database. Thử lại sau 5 giây. Còn {RetryCount} lần thử.", retryCount);
+                    logger.LogError(ex, "Lỗi khi tạo database. Thử lại sau 5 giây. Còn {RetryCount} lần thử.", retryCount);
                     
                     // Đợi 5 giây trước khi thử lại
                     System.Threading.Thread.Sleep(5000);
@@ -216,7 +246,7 @@ if (app.Environment.IsProduction())
         catch (Exception ex)
         {
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "Lỗi không thể khắc phục khi migrate database.");
+            logger.LogError(ex, "Lỗi không thể khắc phục khi thiết lập database.");
         }
     }
 }
