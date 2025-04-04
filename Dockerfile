@@ -1,18 +1,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Tìm và hiển thị các tệp csproj để debug
-RUN find /src -name "*.csproj" || echo "Không tìm thấy file csproj nào"
-
-# Sao chép tệp csproj trước (giả sử là ABC.csproj, nếu không tìm thấy sẽ thử QuanLyThucTap.csproj)
-COPY ["ABC.csproj", "./"] 2>/dev/null || echo "Không tìm thấy ABC.csproj, thử tìm QuanLyThucTap.csproj..."
-COPY ["QuanLyThucTap.csproj", "./"] 2>/dev/null || echo "Không tìm thấy QuanLyThucTap.csproj"
+# Sao chép tệp csproj
+COPY ["ABC.csproj", "./"]
 
 # Liệt kê file hiện có để debug
 RUN ls -la
 
 # Khôi phục các gói phụ thuộc
-RUN dotnet restore "*.csproj" || echo "Không thể khôi phục dependencies"
+RUN dotnet restore "ABC.csproj"
 
 # Sao chép toàn bộ mã nguồn
 COPY . .
@@ -21,11 +17,11 @@ COPY . .
 RUN find . -type f -name "*.csproj" | sort
 
 # Build dự án
-RUN dotnet build "*.csproj" -c Release -o /app/build || echo "Không thể build dự án"
+RUN dotnet build "ABC.csproj" -c Release -o /app/build
 
 # Publish dự án
 FROM build AS publish
-RUN dotnet publish "*.csproj" -c Release -o /app/publish || echo "Không thể publish dự án"
+RUN dotnet publish "ABC.csproj" -c Release -o /app/publish
 
 # Sử dụng runtime để chạy ứng dụng
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
@@ -39,6 +35,5 @@ RUN ls -la
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
-# Tìm tệp dll chính để chạy
-RUN for file in *.dll; do echo "Tìm thấy: $file"; done
+# Chạy ứng dụng
 ENTRYPOINT ["dotnet", "ABC.dll"]
