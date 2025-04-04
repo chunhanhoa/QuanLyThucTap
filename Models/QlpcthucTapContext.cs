@@ -16,38 +16,64 @@ public partial class QlpcthucTapContext : DbContext
     }
 
     public virtual DbSet<CtDanhgium> CtDanhgia { get; set; }
-
     public virtual DbSet<Detai> Detais { get; set; }
-
     public virtual DbSet<Doanhnghiep> Doanhnghieps { get; set; }
-
     public virtual DbSet<Giangvien> Giangviens { get; set; }
-
     public virtual DbSet<Khoa> Khoas { get; set; }
-
     public virtual DbSet<Nguoiphutrach> Nguoiphutraches { get; set; }
-
     public virtual DbSet<Phieudanhgium> Phieudanhgia { get; set; }
-
     public virtual DbSet<Quyen> Quyens { get; set; }
-
     public virtual DbSet<Sinhvien> Sinhviens { get; set; }
-
     public virtual DbSet<Taikhoan> Taikhoans { get; set; }
-
     public virtual DbSet<Tuan> Tuans { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-{
-    if (!optionsBuilder.IsConfigured)
     {
-        // Chỉ dùng connection string mặc định khi không được cấu hình từ bên ngoài
-        optionsBuilder.UseSqlServer("Server=LAPTOP-96K2E9GI\\HOA;Database=QLPCThucTap;Trusted_Connection=True;TrustServerCertificate=True;");
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlServer("Server=LAPTOP-96K2E9GI\\HOA;Database=QLPCThucTap;Trusted_Connection=True;TrustServerCertificate=True;");
+        }
     }
-}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        bool isPostgreSql = Database.ProviderName?.Contains("Npgsql") == true;
+
+        if (isPostgreSql)
+        {
+            // Khi sử dụng PostgreSQL, cần đặt tên bảng và cột là chữ thường
+            foreach (var entity in modelBuilder.Model.GetEntityTypes())
+            {
+                // Đổi tên bảng sang chữ thường nếu đang sử dụng PostgreSQL
+                entity.SetTableName(entity.GetTableName().ToLower());
+
+                // Đổi tên tất cả các cột sang chữ thường
+                foreach (var property in entity.GetProperties())
+                {
+                    property.SetColumnName(property.GetColumnName().ToLower());
+                }
+
+                // Đổi tên các khóa và ràng buộc
+                foreach (var key in entity.GetKeys())
+                {
+                    if (key.GetName() != null)
+                        key.SetName(key.GetName().ToLower());
+                }
+
+                foreach (var fk in entity.GetForeignKeys())
+                {
+                    if (fk.GetConstraintName() != null)
+                        fk.SetConstraintName(fk.GetConstraintName().ToLower());
+                }
+
+                foreach (var index in entity.GetIndexes())
+                {
+                    if (index.GetDatabaseName() != null)
+                        index.SetDatabaseName(index.GetDatabaseName().ToLower());
+                }
+            }
+        }
+
         modelBuilder.Entity<CtDanhgium>(entity =>
         {
             entity.HasKey(e => new { e.MaPdg, e.MaTuan }).HasName("PK__CT_DANHG__461E26BF0645D3F8");

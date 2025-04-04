@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Text.RegularExpressions;
+using ABC.Data;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,9 +40,9 @@ if (builder.Environment.IsProduction())
             var database = match.Groups["database"].Value.TrimEnd('/');
             
             // Tách host và port nếu có
-            var hostParts = host.Split('.');
-            var mainHost = host;
-            var port = "5432"; // Port mặc định PostgreSQL
+            var hostParts = host.Split(':');
+            var mainHost = hostParts[0];
+            var port = hostParts.Length > 1 ? hostParts[1] : "5432"; // Port mặc định PostgreSQL
             
             // Chuyển đổi sang định dạng key-value
             connectionString = $"Host={mainHost};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
@@ -75,6 +77,9 @@ if (builder.Environment.IsProduction())
                 maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(10),
                 errorCodesToAdd: null);
+            
+            // Cấu hình bảng migrations history
+            npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
         });
         
         // Bật chi tiết logging để gỡ lỗi
@@ -169,6 +174,17 @@ if (app.Environment.IsProduction())
         try
         {
             var context = services.GetRequiredService<QlpcthucTapContext>();
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            
+            logger.LogInformation("Đang kiểm tra kết nối tới PostgreSQL...");
+            
+            // Kiểm tra xem database có tồn tại không
+            var canConnect = context.Database.CanConnect();
+            logger.LogInformation("Kết nối tới database: {CanConnect}", canConnect);
+            
+            // Tạo database nếu chưa tồn tại
+            context.Database.EnsureCreated();
+            logger.LogInformation("Đã đảm bảo database được tạo");
             
             // Thêm thời gian chờ và số lần thử lại
             var retryCount = 5;
@@ -176,7 +192,9 @@ if (app.Environment.IsProduction())
             {
                 try
                 {
+                    logger.LogInformation("Đang chạy migrations...");
                     context.Database.Migrate();
+                    logger.LogInformation("Migration thành công");
                     break; // Thoát khỏi vòng lặp nếu migration thành công
                 }
                 catch (Exception ex)
@@ -184,10 +202,10 @@ if (app.Environment.IsProduction())
                     retryCount--;
                     if (retryCount == 0)
                     {
+                        logger.LogError(ex, "Không thể chạy migrations sau nhiều lần thử");
                         throw; // Nếu đã hết số lần thử, ném ngoại lệ
                     }
                     
-                    var logger = services.GetRequiredService<ILogger<Program>>();
                     logger.LogError(ex, "Lỗi khi migrate database. Thử lại sau 5 giây. Còn {RetryCount} lần thử.", retryCount);
                     
                     // Đợi 5 giây trước khi thử lại
