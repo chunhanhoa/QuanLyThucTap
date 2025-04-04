@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Text.RegularExpressions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,35 @@ if (builder.Environment.IsProduction())
     {
         Console.WriteLine("CẢNH BÁO: Connection string 'DefaultConnection' không được tìm thấy!");
         throw new InvalidOperationException("Connection string 'DefaultConnection' không được cấu hình cho môi trường Production.");
+    }
+
+    // Chuyển đổi định dạng connection string URL sang key-value nếu cần
+    if (connectionString.StartsWith("postgresql://"))
+    {
+        // Phân tích cú pháp URL PostgreSQL
+        var regex = new Regex(@"postgresql:\/\/(?<username>[^:]+):(?<password>.+)@(?<host>[^\/]+)\/(?<database>.+)\/?$");
+        var match = regex.Match(connectionString);
+
+        if (match.Success)
+        {
+            var username = match.Groups["username"].Value;
+            var password = match.Groups["password"].Value;
+            var host = match.Groups["host"].Value;
+            var database = match.Groups["database"].Value.TrimEnd('/');
+            
+            // Tách host và port nếu có
+            var hostParts = host.Split('.');
+            var mainHost = host;
+            var port = "5432"; // Port mặc định PostgreSQL
+            
+            // Chuyển đổi sang định dạng key-value
+            connectionString = $"Host={mainHost};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+            Console.WriteLine("Đã chuyển đổi connection string từ định dạng URL sang định dạng key-value.");
+        }
+        else
+        {
+            Console.WriteLine("CẢNH BÁO: Không thể phân tích cú pháp connection string URL PostgreSQL!");
+        }
     }
 
     // In thông tin kết nối (không hiển thị mật khẩu)
