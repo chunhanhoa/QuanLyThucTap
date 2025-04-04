@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Lap trinh web\\QuanLyThucTap\\ABC.csproj": {}
+    "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Youtube\\QuanLyThucTap\\ABC.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Lap trinh web\\QuanLyThucTap\\ABC.csproj": {
+    "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Youtube\\QuanLyThucTap\\ABC.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Lap trinh web\\QuanLyThucTap\\ABC.csproj",
+        "projectUniqueName": "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Youtube\\QuanLyThucTap\\ABC.csproj",
         "projectName": "ABC",
-        "projectPath": "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Lap trinh web\\QuanLyThucTap\\ABC.csproj",
+        "projectPath": "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Youtube\\QuanLyThucTap\\ABC.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Lap trinh web\\QuanLyThucTap\\obj\\",
+        "outputPath": "C:\\Users\\ASUS\\OneDrive\\Máy tính\\Code\\All_File\\Youtube\\QuanLyThucTap\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -64,6 +64,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[9.0.2, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[9.0.4, )"
             }
           },
           "imports": [

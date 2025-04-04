@@ -1,15 +1,28 @@
 using ABC.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides; // Thêm namespace này cho ForwardedHeaders
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Thêm DbContext
-builder.Services.AddDbContext<QlpcthucTapContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Thay đổi cấu hình dịch vụ DbContext
+if (builder.Environment.IsProduction())
+{
+    // Sử dụng PostgreSQL cho môi trường production (Render)
+    builder.Services.AddDbContext<QlpcthucTapContext>(options =>
+        options.UseNpgsql(
+            builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+else
+{
+    // Sử dụng SQL Server cho môi trường development
+    builder.Services.AddDbContext<QlpcthucTapContext>(options =>
+        options.UseSqlServer(
+            builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 // Thêm Authentication với Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -31,6 +44,22 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddHttpsRedirection(options =>
+    {
+        options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
+        options.HttpsPort = 443;
+    });
+
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
 
 var app = builder.Build();
 
@@ -56,10 +85,32 @@ app.UseStaticFiles(new StaticFileOptions
 });
 app.UseRouting();
 app.UseSession();
-
-// Thêm middleware Authentication trước Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+if (app.Environment.IsProduction())
+{
+    app.UseForwardedHeaders();
+}
+
+if (app.Environment.IsProduction())
+{
+    // Áp dụng migration tự động khi triển khai
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<QlpcthucTapContext>(); // Sửa từ ApplicationDbContext thành QlpcthucTapContext
+            context.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while migrating the database.");
+        }
+    }
+}
 
 app.MapControllerRoute(
     name: "default",

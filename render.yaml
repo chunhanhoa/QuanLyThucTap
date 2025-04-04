@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: quanlythuctap
+    env: docker
+    region: singapore # hoặc chọn region phù hợp: singapore, ohio (us-east-1), oregon (us-west-2), frankfurt (eu-central)
+    plan: free
+    repo: https://github.com/your-username/QuanLyThucTap.git # Thay thế bằng URL repo của bạn
+    branch: main
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection # Thay thế nếu tên connection string của bạn khác
+        sync: false # Đặt là false để nhập giá trị thủ công trong Render dashboard
