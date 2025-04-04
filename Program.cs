@@ -1,24 +1,24 @@
 using ABC.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.HttpOverrides; // Thêm namespace này cho ForwardedHeaders
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Thay đổi cấu hình dịch vụ DbContext
+// Thay đổi cấu hình dịch vụ DbContext - Sửa phần này
 if (builder.Environment.IsProduction())
 {
-    // Sử dụng PostgreSQL cho môi trường production (Render)
+    // Chỉ sử dụng PostgreSQL cho môi trường production (Render)
     builder.Services.AddDbContext<QlpcthucTapContext>(options =>
         options.UseNpgsql(
             builder.Configuration.GetConnectionString("DefaultConnection")));
 }
 else
 {
-    // Sử dụng SQL Server cho môi trường development
+    // Chỉ sử dụng SQL Server cho môi trường development
     builder.Services.AddDbContext<QlpcthucTapContext>(options =>
         options.UseSqlServer(
             builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -67,10 +67,16 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    // Tắt HSTS để tránh redirect loop
+    // app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Tắt HTTPS redirection để tránh redirect loop trong production
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
@@ -91,23 +97,44 @@ app.UseAuthorization();
 if (app.Environment.IsProduction())
 {
     app.UseForwardedHeaders();
-}
 
-if (app.Environment.IsProduction())
-{
-    // Áp dụng migration tự động khi triển khai
+    // Sửa phần migration - thêm try-catch và giảm số lượng retry
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
         try
         {
-            var context = services.GetRequiredService<QlpcthucTapContext>(); // Sửa từ ApplicationDbContext thành QlpcthucTapContext
-            context.Database.Migrate();
+            var context = services.GetRequiredService<QlpcthucTapContext>();
+            
+            // Thêm thời gian chờ và số lần thử lại
+            var retryCount = 5;
+            while (retryCount > 0)
+            {
+                try
+                {
+                    context.Database.Migrate();
+                    break; // Thoát khỏi vòng lặp nếu migration thành công
+                }
+                catch (Exception ex)
+                {
+                    retryCount--;
+                    if (retryCount == 0)
+                    {
+                        throw; // Nếu đã hết số lần thử, ném ngoại lệ
+                    }
+                    
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "Lỗi khi migrate database. Thử lại sau 5 giây. Còn {RetryCount} lần thử.", retryCount);
+                    
+                    // Đợi 5 giây trước khi thử lại
+                    System.Threading.Thread.Sleep(5000);
+                }
+            }
         }
         catch (Exception ex)
         {
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while migrating the database.");
+            logger.LogError(ex, "Lỗi không thể khắc phục khi migrate database.");
         }
     }
 }

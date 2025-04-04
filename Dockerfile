@@ -13,9 +13,6 @@ RUN dotnet restore "ABC.csproj"
 # Sao chép toàn bộ mã nguồn
 COPY . .
 
-# Hiển thị cấu trúc thư mục để debug
-RUN find . -type f -name "*.csproj" | sort
-
 # Build dự án
 RUN dotnet build "ABC.csproj" -c Release -o /app/build
 
@@ -34,6 +31,8 @@ RUN ls -la
 # Thiết lập biến môi trường và port
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+# Thêm các biến môi trường để tắt HTTPS redirection
+ENV ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
 
 # Chạy ứng dụng
 ENTRYPOINT ["dotnet", "ABC.dll"]
